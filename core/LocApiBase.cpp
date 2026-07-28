@@ -982,6 +982,26 @@ void LocApiBase::
                          bool /*enableForE911Valid*/)
 DEFAULT_IMPL()
 
+// SM8450 vendor libraries built before enableForE911Valid was added keep the
+// former three-argument LocApiBase entry in their derived-class vtables.  Keep
+// that exact ABI as a standalone thunk instead of adding another virtual
+// method, which would change the current LocApiBase vtable layout.
+//
+// The former base implementation was the same default no-op used above.  Do
+// not redispatch to the four-argument virtual method here: this thunk itself
+// can be installed in a legacy derived vtable, so redispatching could recurse
+// through the same slot.
+extern "C" __attribute__((visibility("default")))
+void locApiBaseConfigRobustLocationCompat(
+        LocApiBase* /*locApi*/, bool /*enabled*/, bool /*enableForE911*/,
+        LocApiResponse* /*adapterResponse*/)
+        __asm__("_ZN8loc_core10LocApiBase20configRobustLocationEbbPNS_14LocApiResponseE");
+
+extern "C" void locApiBaseConfigRobustLocationCompat(
+        LocApiBase* /*locApi*/, bool /*enabled*/, bool /*enableForE911*/,
+        LocApiResponse* /*adapterResponse*/)
+DEFAULT_IMPL()
+
 void LocApiBase::
     getRobustLocationConfig(uint32_t /*sessionId*/, LocApiResponse* /*adapterResponse*/)
 DEFAULT_IMPL()
