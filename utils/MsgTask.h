@@ -75,7 +75,10 @@ class MsgTask {
 public:
     ~MsgTask();
     MsgTask(const char* threadName = NULL);
-    void sendMsg(const LocMsg* msg, uint32_t delayInMs = 0) const ;
+    // Keep the legacy one-argument entry point for vendor location blobs built
+    // against the original SM8450 GPS utility ABI.
+    void sendMsg(const LocMsg* msg) const;
+    void sendMsg(const LocMsg* msg, uint32_t delayInMs) const;
     void sendMsg(const std::function<void()> runnable, uint32_t delayInMs = 0) const;
 };
 

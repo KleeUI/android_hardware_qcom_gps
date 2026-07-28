@@ -124,6 +124,10 @@ void MsgTask::MsgTimer::timeOutCallback() {
     }
 }
 
+void MsgTask::sendMsg(const LocMsg* msg) const {
+    sendMsg(msg, 0);
+}
+
 void MsgTask::sendMsg(const LocMsg* msg, uint32_t delayInMs) const {
     if (msg) {
         if (0 == delayInMs) {
