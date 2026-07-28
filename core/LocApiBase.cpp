@@ -559,12 +559,31 @@ void LocApiBase::requestLocation()
 }
 
 void LocApiBase::requestATL(int connHandle, LocAGpsType agps_type,
+                            LocApnTypeMask apn_type_mask, SubId sub_id)
+{
+    requestATL(connHandle, agps_type, apn_type_mask, sub_id,
+            ATL_OPEN_DEFAULT_TIMEOUT_MSEC);
+}
+
+void LocApiBase::requestATL(int connHandle, LocAGpsType agps_type,
+                            LocApnTypeMask apn_type_mask, uint16_t sub_id)
+{
+    requestATL(connHandle, agps_type, apn_type_mask, static_cast<SubId>(sub_id),
+            ATL_OPEN_DEFAULT_TIMEOUT_MSEC);
+}
+
+void LocApiBase::requestATL(int connHandle, LocAGpsType agps_type,
                             LocApnTypeMask apn_type_mask, SubId sub_id,
                             uint32_t timeout)
 {
     // loop through adapters, and deliver to the first handling adapter.
     TO_1ST_HANDLING_LOCADAPTERS(
             mLocAdapters[i]->requestATL(connHandle, agps_type, apn_type_mask, sub_id, timeout));
+}
+
+void LocApiBase::releaseATL(int connHandle)
+{
+    releaseATL(connHandle, ATL_CLOSE_DEFAULT_TIMEOUT_MSEC);
 }
 
 void LocApiBase::releaseATL(int connHandle, uint32_t timeout)

@@ -204,9 +204,13 @@ public:
     void requestTime();
     void requestLocation();
     void requestATL(int connHandle, LocAGpsType agps_type,
-                    LocApnTypeMask apn_type_mask, SubId sub_id=DEFAULT_SUB,
-                    uint32_t timeout=ATL_OPEN_DEFAULT_TIMEOUT_MSEC);
-    void releaseATL(int connHandle, uint32_t timeout=ATL_CLOSE_DEFAULT_TIMEOUT_MSEC);
+                    LocApnTypeMask apn_type_mask, SubId sub_id=DEFAULT_SUB);
+    void requestATL(int connHandle, LocAGpsType agps_type,
+                    LocApnTypeMask apn_type_mask, uint16_t sub_id);
+    void requestATL(int connHandle, LocAGpsType agps_type,
+                    LocApnTypeMask apn_type_mask, SubId sub_id, uint32_t timeout);
+    void releaseATL(int connHandle);
+    void releaseATL(int connHandle, uint32_t timeout);
     void requestNiNotify(GnssNiNotification &notify, const void* data,
                          const LocInEmergency emergencyState);
     void reportGnssMeasurements(GnssMeasurements& gnssMeasurements, int msInWeek);
