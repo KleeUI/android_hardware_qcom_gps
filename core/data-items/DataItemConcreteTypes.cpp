@@ -952,3 +952,245 @@ int32_t QesdkWwanCsConsentSrcDataItem::copyFrom(IDataItemCore* src) {
 }
 
 } //namespace loc_core
+
+// The SM8450 location blobs were built before these data-item classes were
+// retired upstream.  Their constructors live in the blobs, while the key
+// virtual functions (and therefore the vtables) historically lived in
+// libloc_core.  Keep private definitions here so the old ABI remains available
+// without exposing deprecated types to new source code.
+namespace loc_core {
+
+class AirplaneModeDataItem : public IDataItemCore {
+public:
+    explicit AirplaneModeDataItem(IDataItemCore* item) :
+            AirplaneModeDataItem(static_cast<AirplaneModeDataItem*>(item)->mMode) {}
+    explicit AirplaneModeDataItem(bool mode = false) : mMode(mode) {
+        mId = AIRPLANEMODE_DATA_ITEM_ID;
+    }
+    virtual ~AirplaneModeDataItem() {}
+    virtual void stringify(std::string& valueStr) override;
+    virtual int32_t copyFrom(IDataItemCore* src) override;
+
+    bool mMode;
+};
+
+class NLPStatusDataItem : public IDataItemCore {
+public:
+    explicit NLPStatusDataItem(bool enabled = false) : mEnabled(enabled) {
+        mId = NLPSTATUS_DATA_ITEM_ID;
+    }
+    virtual ~NLPStatusDataItem() {}
+    virtual void stringify(std::string& valueStr) override;
+    virtual int32_t copyFrom(IDataItemCore* src) override;
+
+    bool mEnabled;
+};
+
+class ScreenStateDataItem : public IDataItemCore {
+public:
+    explicit ScreenStateDataItem(bool state = false) : mState(state) {
+        mId = SCREEN_STATE_DATA_ITEM_ID;
+    }
+    virtual ~ScreenStateDataItem() {}
+    virtual void stringify(std::string& valueStr) override;
+    virtual int32_t copyFrom(IDataItemCore* src) override;
+
+    bool mState;
+};
+
+class ShutdownStateDataItem : public IDataItemCore {
+public:
+    explicit ShutdownStateDataItem(bool state = false) : mState(state) {
+        mId = SHUTDOWN_STATE_DATA_ITEM_ID;
+    }
+    virtual ~ShutdownStateDataItem() {}
+    virtual void stringify(std::string& valueStr) override;
+    virtual int32_t copyFrom(IDataItemCore* src) override;
+
+    bool mState;
+};
+
+class AssistedGpsDataItem : public IDataItemCore {
+public:
+    explicit AssistedGpsDataItem(bool enabled = false) : mEnabled(enabled) {
+        mId = ASSISTED_GPS_DATA_ITEM_ID;
+    }
+    virtual ~AssistedGpsDataItem() {}
+    virtual void stringify(std::string& valueStr) override;
+    virtual int32_t copyFrom(IDataItemCore* src) override;
+
+    bool mEnabled;
+};
+
+class TacDataItem : public IDataItemCore {
+public:
+    explicit TacDataItem(const std::string& value = "") : mValue(value) {
+        mId = TAC_DATA_ITEM_ID;
+    }
+    virtual ~TacDataItem() {}
+    virtual void stringify(std::string& valueStr) override;
+    virtual int32_t copyFrom(IDataItemCore* src) override;
+
+    std::string mValue;
+};
+
+// BTLE_SCAN_DATA_ITEM_ID and BT_SCAN_DATA_ITEM_ID occupied 22 and 23 when
+// Cupid's proprietary location stack was built.  Do not reinsert them into the
+// current enum because that would renumber active AOSP 17 data items.
+static constexpr DataItemId kLegacyBtLeScanDataItemId = static_cast<DataItemId>(22);
+static constexpr DataItemId kLegacyBtScanDataItemId = static_cast<DataItemId>(23);
+static constexpr size_t kLegacySrnMacAddressLength = 6;
+
+class SrnDeviceScanDetailsDataItem : public IDataItemCore {
+public:
+    explicit SrnDeviceScanDetailsDataItem(DataItemId id) :
+            mValidSrnData(false),
+            mApSrnRssi(-1),
+            mApSrnTimestamp(0),
+            mRequestTimestamp(0),
+            mReceiveTimestamp(0),
+            mErrorCause(-1) {
+        mId = id;
+    }
+    virtual ~SrnDeviceScanDetailsDataItem() {}
+
+    bool mValidSrnData;
+    int32_t mApSrnRssi;
+    uint8_t mApSrnMacAddress[kLegacySrnMacAddressLength];
+    int64_t mApSrnTimestamp;
+    int64_t mRequestTimestamp;
+    int64_t mReceiveTimestamp;
+    int32_t mErrorCause;
+};
+
+class BtDeviceScanDetailsDataItem : public SrnDeviceScanDetailsDataItem {
+public:
+    BtDeviceScanDetailsDataItem() : SrnDeviceScanDetailsDataItem(kLegacyBtScanDataItemId) {}
+    virtual ~BtDeviceScanDetailsDataItem() {}
+    virtual void stringify(std::string& valueStr) override;
+    virtual int32_t copyFrom(IDataItemCore* src) override;
+};
+
+class BtLeDeviceScanDetailsDataItem : public SrnDeviceScanDetailsDataItem {
+public:
+    BtLeDeviceScanDetailsDataItem() : SrnDeviceScanDetailsDataItem(kLegacyBtLeScanDataItemId) {}
+    virtual ~BtLeDeviceScanDetailsDataItem() {}
+    virtual void stringify(std::string& valueStr) override;
+    virtual int32_t copyFrom(IDataItemCore* src) override;
+};
+
+template <typename T>
+static int32_t copyLegacyBooleanItem(T* destination, IDataItemCore* source) {
+    if (source == nullptr || source->getId() != destination->getId()) {
+        return -1;
+    }
+    destination->mEnabled = static_cast<T*>(source)->mEnabled;
+    return 0;
+}
+
+void AirplaneModeDataItem::stringify(std::string& valueStr) {
+    valueStr = "IS_AIRPLANE_MODE_ON: ";
+    valueStr += mMode ? "true" : "false";
+}
+
+int32_t AirplaneModeDataItem::copyFrom(IDataItemCore* src) {
+    if (src == nullptr || src->getId() != mId) {
+        return -1;
+    }
+    mMode = static_cast<AirplaneModeDataItem*>(src)->mMode;
+    return 0;
+}
+
+void NLPStatusDataItem::stringify(std::string& valueStr) {
+    valueStr = "IS_NETWORK_PROVIDER_ENABLED: ";
+    valueStr += mEnabled ? "true" : "false";
+}
+
+int32_t NLPStatusDataItem::copyFrom(IDataItemCore* src) {
+    return copyLegacyBooleanItem(this, src);
+}
+
+void ScreenStateDataItem::stringify(std::string& valueStr) {
+    valueStr = "IS_SCREEN_ON: ";
+    valueStr += mState ? "true" : "false";
+}
+
+int32_t ScreenStateDataItem::copyFrom(IDataItemCore* src) {
+    if (src == nullptr || src->getId() != mId) {
+        return -1;
+    }
+    mState = static_cast<ScreenStateDataItem*>(src)->mState;
+    return 0;
+}
+
+void ShutdownStateDataItem::stringify(std::string& valueStr) {
+    valueStr = "IS_SHUTDOWN: ";
+    valueStr += mState ? "true" : "false";
+}
+
+int32_t ShutdownStateDataItem::copyFrom(IDataItemCore* src) {
+    if (src == nullptr || src->getId() != mId) {
+        return -1;
+    }
+    mState = static_cast<ShutdownStateDataItem*>(src)->mState;
+    return 0;
+}
+
+void AssistedGpsDataItem::stringify(std::string& valueStr) {
+    valueStr = "IS_ASSISTED_GPS_ENABLED: ";
+    valueStr += mEnabled ? "true" : "false";
+}
+
+int32_t AssistedGpsDataItem::copyFrom(IDataItemCore* src) {
+    return copyLegacyBooleanItem(this, src);
+}
+
+void TacDataItem::stringify(std::string& valueStr) {
+    valueStr = "TAC: ";
+    valueStr += mValue;
+}
+
+int32_t TacDataItem::copyFrom(IDataItemCore* src) {
+    if (src == nullptr || src->getId() != mId) {
+        return -1;
+    }
+    mValue = static_cast<TacDataItem*>(src)->mValue;
+    return 0;
+}
+
+static int32_t copyLegacySrnItem(
+        SrnDeviceScanDetailsDataItem* destination, IDataItemCore* source) {
+    if (source == nullptr || source->getId() != destination->getId()) {
+        return -1;
+    }
+    auto* item = static_cast<SrnDeviceScanDetailsDataItem*>(source);
+    destination->mValidSrnData = item->mValidSrnData;
+    destination->mApSrnRssi = item->mApSrnRssi;
+    memcpy(destination->mApSrnMacAddress, item->mApSrnMacAddress,
+            sizeof(destination->mApSrnMacAddress));
+    destination->mApSrnTimestamp = item->mApSrnTimestamp;
+    destination->mRequestTimestamp = item->mRequestTimestamp;
+    destination->mReceiveTimestamp = item->mReceiveTimestamp;
+    destination->mErrorCause = item->mErrorCause;
+    return 0;
+}
+
+void BtDeviceScanDetailsDataItem::stringify(std::string& valueStr) {
+    valueStr = "BT_VALID_DEV: ";
+    valueStr += mValidSrnData ? "true" : "false";
+}
+
+int32_t BtDeviceScanDetailsDataItem::copyFrom(IDataItemCore* src) {
+    return copyLegacySrnItem(this, src);
+}
+
+void BtLeDeviceScanDetailsDataItem::stringify(std::string& valueStr) {
+    valueStr = "BTLE_VALID_DEV: ";
+    valueStr += mValidSrnData ? "true" : "false";
+}
+
+int32_t BtLeDeviceScanDetailsDataItem::copyFrom(IDataItemCore* src) {
+    return copyLegacySrnItem(this, src);
+}
+
+}  // namespace loc_core
