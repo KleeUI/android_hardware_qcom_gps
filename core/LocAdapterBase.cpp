@@ -192,8 +192,17 @@ DEFAULT_IMPL(false)
 
 bool LocAdapterBase::
     requestATL(int /*connHandle*/, LocAGpsType /*agps_type*/,
+               LocApnTypeMask /*apn_type_mask*/, uint16_t /*sub_id*/)
+DEFAULT_IMPL(false)
+
+bool LocAdapterBase::
+    requestATL(int /*connHandle*/, LocAGpsType /*agps_type*/,
                LocApnTypeMask /*apn_type_mask*/, SubId /*sub_id*/,
                uint32_t /*timeout*/)
+DEFAULT_IMPL(false)
+
+bool LocAdapterBase::
+    releaseATL(int /*connHandle*/)
 DEFAULT_IMPL(false)
 
 bool LocAdapterBase::

@@ -245,8 +245,11 @@ public:
     virtual bool requestXtraData();
     virtual bool requestTime();
     virtual bool requestLocation();
+    bool requestATL(int connHandle, LocAGpsType agps_type,
+                    LocApnTypeMask apn_type_mask, uint16_t sub_id);
     virtual bool requestATL(int connHandle, LocAGpsType agps_type,
                             LocApnTypeMask apn_type_mask, SubId sub_id, uint32_t timeout);
+    bool releaseATL(int connHandle);
     virtual bool releaseATL(int connHandle, uint32_t timeout);
     virtual bool requestNiNotifyEvent(const GnssNiNotification &notify, const void* data,
                                       const LocInEmergency emergencyState);
