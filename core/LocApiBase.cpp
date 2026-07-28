@@ -1313,4 +1313,30 @@ bool RealtimeEstimator::getCurrentTime(
     return clockGetTimeSuccess;
 }
 
+// Compatibility entry points for SM8450 location blobs built before
+// ElapsedRealtimeEstimator was renamed to RealtimeEstimator.  The rename kept
+// the object layout and algorithms unchanged, so forward calls through the
+// current implementation while retaining the old C++ symbols.
+class ElapsedRealtimeEstimator {
+public:
+    int64_t getElapsedRealtimeEstimateNanos(
+            int64_t curDataTimeNanos, bool isCurDataTimeTrustable, int64_t tbfNanos);
+    void reset();
+    static int64_t getElapsedRealtimeQtimer(int64_t qtimerTicksAtOrigin);
+};
+
+int64_t ElapsedRealtimeEstimator::getElapsedRealtimeEstimateNanos(
+        int64_t curDataTimeNanos, bool isCurDataTimeTrustable, int64_t tbfNanos) {
+    return reinterpret_cast<RealtimeEstimator*>(this)->getElapsedRealtimeEstimateNanos(
+            curDataTimeNanos, isCurDataTimeTrustable, tbfNanos);
+}
+
+void ElapsedRealtimeEstimator::reset() {
+    reinterpret_cast<RealtimeEstimator*>(this)->reset();
+}
+
+int64_t ElapsedRealtimeEstimator::getElapsedRealtimeQtimer(int64_t qtimerTicksAtOrigin) {
+    return RealtimeEstimator::getElapsedRealtimeQtimer(qtimerTicksAtOrigin);
+}
+
 } // namespace loc_core
