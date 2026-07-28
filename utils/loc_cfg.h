@@ -154,6 +154,7 @@ inline int loc_update_conf(const char* conf_data, int32_t length,
 // Below are the location conf file paths
 extern const char LOC_PATH_GPS_CONF[];
 extern const char LOC_PATH_IZAT_CONF[];
+extern const char LOC_PATH_BATCHING_CONF[];
 extern const char LOC_PATH_LOWI_CONF[];
 extern const char LOC_PATH_SAP_CONF[];
 extern const char LOC_PATH_APDR_CONF[];

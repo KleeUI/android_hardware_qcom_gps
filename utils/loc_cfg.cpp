@@ -90,6 +90,7 @@ typedef bool(*LogGnssF3Init)(void);
 // same conf path string over and again in location code.
 const char LOC_PATH_GPS_CONF[] = LOC_PATH_GPS_CONF_STR;
 const char LOC_PATH_IZAT_CONF[] = LOC_PATH_IZAT_CONF_STR;
+const char LOC_PATH_BATCHING_CONF[] = LOC_PATH_BATCHING_CONF_STR;
 const char LOC_PATH_LOWI_CONF[] = LOC_PATH_LOWI_CONF_STR;
 const char LOC_PATH_SAP_CONF[] = LOC_PATH_SAP_CONF_STR;
 const char LOC_PATH_APDR_CONF[] = LOC_PATH_APDR_CONF_STR;
