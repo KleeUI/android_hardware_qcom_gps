@@ -146,11 +146,11 @@ static void convertGnssAntennaInfo(std::vector<GnssAntennaInformation>& in,
 
 void gnssAntennaInfoServiceDied(void* cookie) {
     LOC_LOGe("IGnssAntennaInfo AIDL service died");
-    auto* state = static_cast<AntennaCallbackState*>(cookie);
-    if (state != nullptr) {
-        std::lock_guard<std::mutex> lock(state->mutex);
-        state->callback = nullptr;
-    }
+    // The death cookie is intentionally null.  Binder does not promise that
+    // unlink synchronizes a raced death callback, so retaining a raw State*
+    // here would permit a use-after-free during extension teardown.  The
+    // normal close/destructor path clears the shared callback state safely.
+    (void)cookie;
 }
 GnssAntennaInfo::GnssAntennaInfo(Gnss* gnss) : mGnss(gnss),
     mDeathRecipient(AIBinder_DeathRecipient_new(&gnssAntennaInfoServiceDied)) {
@@ -185,13 +185,13 @@ ScopedAStatus GnssAntennaInfo::setCallback(
     std::unique_lock<std::mutex> lock(mCallbackState->mutex);
     if (mCallbackState->callback != nullptr) {
         AIBinder_unlinkToDeath(mCallbackState->callback->asBinder().get(), mDeathRecipient,
-                mCallbackState.get());
+                nullptr);
     }
 
     mCallbackState->callback = callback;
     if (mCallbackState->callback != nullptr) {
         AIBinder_linkToDeath(mCallbackState->callback->asBinder().get(), mDeathRecipient,
-                mCallbackState.get());
+                nullptr);
     }
     lock.unlock();
 
@@ -223,7 +223,7 @@ ScopedAStatus GnssAntennaInfo::close() {
     std::unique_lock<std::mutex> lock(mCallbackState->mutex);
     if (mCallbackState->callback != nullptr) {
         AIBinder_unlinkToDeath(mCallbackState->callback->asBinder().get(), mDeathRecipient,
-                mCallbackState.get());
+                nullptr);
         mCallbackState->callback = nullptr;
     }
     lock.unlock();
