@@ -67,7 +67,8 @@ GnssDebug::GnssDebug(Gnss* gnss) : mGnss(gnss) {}
 
     // get debug report snapshot via hal interface
     GnssDebugReport reports = { };
-    mGnss->getApi().locAPIGetDebugReport(reports);
+    if (mGnss->getGnssInterface() == nullptr) return ScopedAStatus::fromExceptionCode(STATUS_INVALID_OPERATION);
+    mGnss->getGnssInterface()->getDebugReport(reports);
 
     // location block
     if (reports.mLocation.mValid) {

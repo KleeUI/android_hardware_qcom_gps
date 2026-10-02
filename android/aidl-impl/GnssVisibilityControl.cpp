@@ -27,25 +27,13 @@ void gnssVisibilityControlServiceDied(void* cookie) {
 
 GnssVisibilityControl::GnssVisibilityControl(Gnss* gnss) : mGnss(gnss),
     mDeathRecipient(AIBinder_DeathRecipient_new(&gnssVisibilityControlServiceDied)) {
-    LocationControlCallbacks locCtrlCbs;
-    memset(&locCtrlCbs, 0, sizeof(locCtrlCbs));
-    locCtrlCbs.size = sizeof(LocationControlCallbacks);
-
-    locCtrlCbs.nfwStatusCb = [this](const GnssNfwNotification& notification) {
-        statusCb(notification);
-    };
-
-    locCtrlCbs.isInEmergencyStatusCb = [this] () {
-        return isE911Session();
-    };
-
-    if (mGnss->getLocationControlApi() != nullptr ) {
-        mGnss->getLocationControlApi()->updateCallbacks(locCtrlCbs);
-    }
 }
 
 ScopedAStatus GnssVisibilityControl::enableNfwLocationAccess(
         const std::vector<std::string>& proxyApps) {
+    (void)proxyApps;
+    return ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+#if 0
     if (nullptr == mGnss || nullptr == mGnss->getLocationControlApi()) {
         LOC_LOGe("Null GNSS interface");
         return ScopedAStatus::fromExceptionCode(STATUS_INVALID_OPERATION);
@@ -58,6 +46,7 @@ ScopedAStatus GnssVisibilityControl::enableNfwLocationAccess(
 
     mGnss->getLocationControlApi()->enableNfwLocationAccess(apps);
         return ScopedAStatus::ok();
+#endif
 }
 static void convertGnssNfwNotification(const GnssNfwNotification& in,
     IGnssVisibilityControlCallback::NfwNotification& out) {

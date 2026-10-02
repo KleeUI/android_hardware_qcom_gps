@@ -26,53 +26,15 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-
-/*
-Changes from Qualcomm Innovation Center are provided under the following license:
-
-Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted (subject to the limitations in the
-disclaimer below) provided that the following conditions are met:
-
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-
-    * Redistributions in binary form must reproduce the above
-      copyright notice, this list of conditions and the following
-      disclaimer in the documentation and/or other materials provided
-      with the distribution.
-
-    * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
-      contributors may be used to endorse or promote products derived
-      from this software without specific prior written permission.
-
-NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
-GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
-HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
-WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
-ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
-GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
-OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
-IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
 #define LOG_NDEBUG 0
 #define LOG_TAG "LocSvc_MsgTask"
 
 #include <unistd.h>
-#include <LocTimer.h>
 #include <MsgTask.h>
 #include <msg_q.h>
 #include <log_util.h>
 #include <loc_log.h>
 #include <loc_pla.h>
-#include <algorithm>
 
 namespace loc_util {
 
@@ -103,46 +65,16 @@ MsgTask::MsgTask(const char* threadName) :
     mThread.start(threadName, std::make_shared<MTRunnable>(mQ));
 }
 
-MsgTask::~MsgTask() {
-    mAllMsgTimers.clear();
-}
-
-MsgTask::MsgTimer::~MsgTimer() {
-    if (nullptr != mMsg) {
-        LocMsgDestroy(mMsg);
-    }
-}
-
-void MsgTask::MsgTimer::timeOutCallback() {
-    mMsgTask.sendMsg(mMsg);
-    std::lock_guard<mutex> lock(mMsgTask.mMutex);
-    auto it = std::find_if(mMsgTask.mAllMsgTimers.begin(), mMsgTask.mAllMsgTimers.end(),
-                           [this](const MsgTask::MsgTimer& other) { return &other == this; });
-    if (mMsgTask.mAllMsgTimers.end() != it) {
-        it->detachMsg();
-        mMsgTask.mAllMsgTimers.erase(it);
-    }
-}
-
 void MsgTask::sendMsg(const LocMsg* msg) const {
-    sendMsg(msg, 0);
-}
-
-void MsgTask::sendMsg(const LocMsg* msg, uint32_t delayInMs) const {
-    if (msg) {
-        if (0 == delayInMs) {
-            msg_q_snd((void*)mQ, (void*)msg, LocMsgDestroy);
-        } else {
-            std::lock_guard<mutex> lock(mMutex);
-            mAllMsgTimers.emplace_front(*(MsgTask*)this, msg, delayInMs);
-        }
-     } else {
-        LOC_LOGe("msg is %p and this is %p",
-                 msg, this);
+    if (msg && this) {
+        msg_q_snd((void*)mQ, (void*)msg, LocMsgDestroy);
+    } else {
+        LOC_LOGE("%s: msg is %p and this is %p",
+                 __func__, msg, this);
     }
 }
 
-void MsgTask::sendMsg(const std::function<void()> runnable, uint32_t delayInMs) const {
+void MsgTask::sendMsg(const std::function<void()> runnable) const {
     struct RunMsg : public LocMsg {
         const std::function<void()> mRunnable;
     public:
@@ -150,7 +82,7 @@ void MsgTask::sendMsg(const std::function<void()> runnable, uint32_t delayInMs) 
         ~RunMsg() = default;
         inline virtual void proc() const override { mRunnable(); }
     };
-    sendMsg(new RunMsg(runnable), delayInMs);
+    sendMsg(new RunMsg(runnable));
 }
 
 void MTRunnable::interrupt() {
@@ -166,7 +98,8 @@ bool MTRunnable::run() {
     LocMsg* msg;
     msq_q_err_type result = msg_q_rcv((void*)mQ, (void **)&msg);
     if (eMSG_Q_SUCCESS != result) {
-        LOC_LOGe("msgTask run failed to receive msg, error code is: %d", result);
+        LOC_LOGE("%s:%d] fail receiving msg: %s\n", __func__, __LINE__,
+                 loc_get_msg_q_status(result));
         return false;
     }
 

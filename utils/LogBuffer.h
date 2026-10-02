@@ -27,12 +27,6 @@
  *
  */
 
-/*
-Changes from Qualcomm Innovation Center are provided under the following license:
-Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
-SPDX-License-Identifier: BSD-3-Clause-Clear
-*/
-
 #ifndef LOG_BUFFER_H
 #define LOG_BUFFER_H
 
@@ -92,7 +86,6 @@ public:
 private:
     LogBuffer();
     void registerSignalHandler();
-    void setLogBufferConfig();
     static void signalHandler(const int code, siginfo_t *const si, void *const sc);
 
 };

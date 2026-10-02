@@ -94,7 +94,7 @@ public:
             const IGnssMeasurementInterface::Options& options) override;
     // callbacks we are interested in
     void onGnssMeasurementsCb(
-            const GnssMeasurementsNotification &gnssMeasurementsNotification) final;
+            GnssMeasurementsNotification gnssMeasurementsNotification) final;
 
 private:
     shared_ptr<IGnssMeasurementCallback> mGnssMeasurementCbIface = nullptr;
@@ -104,7 +104,7 @@ private:
     bool mTracking;
 
     static void gnssMeasurementDied(void* cookie);
-    void startTracking(GnssPowerMode powerMode = GNSS_POWER_MODE_DEFAULT,
+    void startTracking(GnssPowerMode powerMode = GNSS_POWER_MODE_M2,
                        uint32_t timeBetweenMeasurement = GPS_DEFAULT_FIX_INTERVAL_MS);
     void convertGnssData(const GnssMeasurementsNotification& in, GnssData& out);
     void convertGnssMeasurement(const GnssMeasurementsData& in, GnssMeasurement& out);

@@ -26,26 +26,13 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-/*
- * ​​​​​Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- * SPDX-License-Identifier: BSD-3-Clause-Clear
- */
 #ifndef __MSG_TASK__
 #define __MSG_TASK__
 
-#include <mutex>
-#include <list>
 #include <functional>
 #include <LocThread.h>
-#include <LocTimer.h>
-
-using std::list;
-using std::mutex;
 
 namespace loc_util {
-
-class MsgTimer;
 
 struct LocMsg {
     inline LocMsg() {}
@@ -55,31 +42,13 @@ struct LocMsg {
 };
 
 class MsgTask {
-    class MsgTimer : public LocTimer {
-        MsgTask& mMsgTask;
-        LocMsg* mMsg;
-    public:
-        inline MsgTimer(MsgTask& msgTask, const LocMsg* msg, uint32_t delayInMs) :
-                LocTimer(), mMsgTask(msgTask), mMsg((LocMsg*)msg) {
-            start(delayInMs, false/* wakeOnExpire */);
-        }
-        virtual ~MsgTimer();
-       inline void detachMsg() { mMsg = nullptr; }
-        virtual void timeOutCallback() override;
-    };
-    friend class MsgTimer;
     const void* mQ;
     LocThread mThread;
-    mutable mutex mMutex;
-    mutable list<MsgTimer> mAllMsgTimers;
 public:
-    ~MsgTask();
+    ~MsgTask() = default;
     MsgTask(const char* threadName = NULL);
-    // Keep the legacy one-argument entry point for vendor location blobs built
-    // against the original SM8450 GPS utility ABI.
     void sendMsg(const LocMsg* msg) const;
-    void sendMsg(const LocMsg* msg, uint32_t delayInMs) const;
-    void sendMsg(const std::function<void()> runnable, uint32_t delayInMs = 0) const;
+    void sendMsg(const std::function<void()> runnable) const;
 };
 
 } //

@@ -149,7 +149,7 @@ void GeofenceAPIClient::geofenceRemoveAll()
 
 // callbacks
 void GeofenceAPIClient::onGeofenceBreachCb(
-        const GeofenceBreachNotification& geofenceBreachNotification)
+        GeofenceBreachNotification geofenceBreachNotification)
 {
     LOC_LOGd("BreachNotification.count %d", geofenceBreachNotification.count);
     mMutex.lock();
@@ -182,7 +182,7 @@ void GeofenceAPIClient::onGeofenceBreachCb(
 }
 
 void GeofenceAPIClient::onGeofenceStatusCb(
-        const GeofenceStatusNotification& geofenceStatusNotification) {
+        GeofenceStatusNotification geofenceStatusNotification) {
     LOC_LOGd("geofenceStatusNotification: %d", geofenceStatusNotification.available);
     mMutex.lock();
     auto cbIface = mGnssGeofencingCbIface;

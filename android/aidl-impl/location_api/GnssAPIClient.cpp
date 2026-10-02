@@ -188,7 +188,10 @@ void GnssAPIClient::setFlpCallbacks() {
     LocationCallbacks locationCallbacks;
     memset(&locationCallbacks, 0, sizeof(LocationCallbacks));
     locationCallbacks.size = sizeof(LocationCallbacks);
-    mTrackingOptions.qualityLevelAccepted = QUALITY_ANY_VALID_FIX;
+    // Legacy LocationOptions uses the same ABI enum values, but the old
+    // headers do not export the newer symbolic names.
+    mTrackingOptions.qualityLevelAccepted =
+            static_cast<decltype(mTrackingOptions.qualityLevelAccepted)>(1);
 
     locationCallbacks.trackingCb = [this](const Location& location) {
         onTrackingCb(location);
@@ -207,7 +210,8 @@ void GnssAPIClient::setCallbacks() {
     LocationCallbacks locationCallbacks;
     memset(&locationCallbacks, 0, sizeof(LocationCallbacks));
     locationCallbacks.size = sizeof(LocationCallbacks);
-    mTrackingOptions.qualityLevelAccepted = QUALITY_HIGH_ACCU_FIX_ONLY;
+    mTrackingOptions.qualityLevelAccepted =
+            static_cast<decltype(mTrackingOptions.qualityLevelAccepted)>(0);
 
     locationCallbacks.engineLocationsInfoCb = nullptr;
     locationCallbacks.engineLocationsInfoCb = [this](uint32_t count,
@@ -236,10 +240,8 @@ void GnssAPIClient::setCallbacks() {
 
     locationCallbacks.gnssMeasurementsCb = nullptr;
 
-    locationCallbacks.gnssSignalTypesCb =
-            [this](const GnssCapabNotification& gnssCapabNotification) {
-        onGnssSignalTypesCb(gnssCapabNotification);
-    };
+    // A separate source query must provide modem-supported signal types.
+    // Do not append a callback to the frozen legacy LocationCallbacks ABI.
 
     locAPISetCallbacks(locationCallbacks);
 }
@@ -530,19 +532,13 @@ void GnssAPIClient::updateCapabilities(LocationCapabilitiesMask capabilitiesMask
 
     if (capabilitiesMask & LOCATION_CAPABILITIES_GNSS_MEASUREMENTS_BIT) {
         gnssInfo.yearOfHw++; // 2016
-        if (capabilitiesMask & LOCATION_CAPABILITIES_DEBUG_DATA_BIT) {
-            gnssInfo.yearOfHw++; // 2017
-            if (capabilitiesMask & LOCATION_CAPABILITIES_CONSTELLATION_ENABLEMENT_BIT ||
-                capabilitiesMask & LOCATION_CAPABILITIES_AGPM_BIT) {
-                gnssInfo.yearOfHw++; // 2018
-                if (capabilitiesMask & LOCATION_CAPABILITIES_PRIVACY_BIT) {
-                    gnssInfo.yearOfHw++; // 2019
-                    if (capabilitiesMask & LOCATION_CAPABILITIES_CONFORMITY_INDEX_BIT) {
-                        gnssInfo.yearOfHw += 3; // 2022
-                        if (capabilitiesMask & LOCATION_CAPABILITIES_GNSS_BANDS_BIT) {
-                            gnssInfo.yearOfHw++; // 2023
-                        }
-                    }
+        if (capabilitiesMask & LOCATION_CAPABILITIES_CONSTELLATION_ENABLEMENT_BIT ||
+            capabilitiesMask & LOCATION_CAPABILITIES_AGPM_BIT) {
+            gnssInfo.yearOfHw++; // 2018
+            if (capabilitiesMask & LOCATION_CAPABILITIES_PRIVACY_BIT) {
+                gnssInfo.yearOfHw++; // 2019
+                if (capabilitiesMask & LOCATION_CAPABILITIES_CONFORMITY_INDEX_BIT) {
+                    gnssInfo.yearOfHw += 3; // 2022
                 }
             }
         }
@@ -561,7 +557,7 @@ void GnssAPIClient::updateCapabilities(LocationCapabilitiesMask capabilitiesMask
     }
 }
 
-void GnssAPIClient::onTrackingCb(const Location& location) {
+void GnssAPIClient::onTrackingCb(Location location) {
     mMutex.lock();
     auto gnssCbIface(mGnssCbIface);
     bool isTracking = mTracking;
@@ -574,15 +570,8 @@ void GnssAPIClient::onTrackingCb(const Location& location) {
     }
 
     //For KaiOS 4.0, stop NLP when final fix is received, resume NLP when fix is not final
-    if (nullptr != sNlpRequestCb && mIsNlpActive && location.sessionStatus == LOC_SESS_SUCCESS) {
-        mIsNlpActive = false;
-        sNlpRequestCb(mIsNlpActive);
-    }
-
-    if (nullptr != sNlpRequestCb && !mIsNlpActive && location.sessionStatus != LOC_SESS_SUCCESS) {
-        mIsNlpActive = true;
-        sNlpRequestCb(mIsNlpActive);
-    }
+    // The legacy Location struct has no sessionStatus field.  NLP state is
+    // therefore left unchanged until an explicit control request arrives.
 
     if (gnssCbIface != nullptr) {
         GnssLocation gnssLocation;
@@ -597,7 +586,7 @@ void GnssAPIClient::onTrackingCb(const Location& location) {
 
 }
 
-void GnssAPIClient::onGnssSvCb(const GnssSvNotification& gnssSvNotification) {
+void GnssAPIClient::onGnssSvCb(GnssSvNotification gnssSvNotification) {
     LOC_LOGd("]: (count: %u)", gnssSvNotification.count);
     mMutex.lock();
     auto gnssCbIface(mGnssCbIface);
@@ -613,7 +602,7 @@ void GnssAPIClient::onGnssSvCb(const GnssSvNotification& gnssSvNotification) {
     }
 }
 
-void GnssAPIClient::onGnssNmeaCb(const GnssNmeaNotification& gnssNmeaNotification) {
+void GnssAPIClient::onGnssNmeaCb(GnssNmeaNotification gnssNmeaNotification) {
     mMutex.lock();
     auto gnssCbIface(mGnssCbIface);
     mMutex.unlock();
@@ -669,8 +658,7 @@ void GnssAPIClient::onGnssSignalTypesCb(const GnssCapabNotification& gnssCapabNo
 
     LOC_LOGd("mSignalTypeCbExpected = %d ", mSignalTypeCbExpected);
     if ((gnssCbIface != nullptr) && (true == mSignalTypeCbExpected)) {
-       LOC_LOGd("report to aidl, new 0x%x ",
-                gnssCapabNotification.gnssSupportedSignals);
+       LOC_LOGd("reporting legacy GNSS signal capabilities");
        std::vector<GnssSignalType> gnssSignalTypes;
        convertGnssSignalType(gnssCapabNotification, gnssSignalTypes);
        auto r = gnssCbIface->gnssSetSignalTypeCapabilitiesCb(gnssSignalTypes);

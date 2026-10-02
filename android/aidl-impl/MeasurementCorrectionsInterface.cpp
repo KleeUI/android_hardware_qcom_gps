@@ -94,6 +94,9 @@ void MeasurementCorrectionsInterface::setCapabilitiesCb(
 
 ScopedAStatus MeasurementCorrectionsInterface::setCorrections(
         const MeasurementCorrections& corrections) {
+    (void)corrections;
+    return ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+#if 0
     GnssMeasurementCorrections gnssMeasurementCorrections = {};
 
     gnss::aidl::implementation::convertMeasurementCorrections(corrections,
@@ -142,10 +145,14 @@ ScopedAStatus MeasurementCorrectionsInterface::setCorrections(
 
     mGnss->getLocationControlApi()->measCorrSetCorrections(gnssMeasurementCorrections);
    return ScopedAStatus::ok();
+#endif
 }
 
 ScopedAStatus MeasurementCorrectionsInterface::setCallback(
         const shared_ptr<IMeasurementCorrectionsCallback>& callback) {
+    (void)callback;
+    return ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
+#if 0
     if (nullptr == mGnss || nullptr == mGnss->getLocationControlApi()) {
         LOC_LOGe("Null GNSS interface");
         return ScopedAStatus::fromExceptionCode(STATUS_INVALID_OPERATION);
@@ -171,7 +178,9 @@ ScopedAStatus MeasurementCorrectionsInterface::setCallback(
             setCapabilitiesCb(capabilities);
     };
     mGnss->getLocationControlApi()->updateCallbacks(locCtrlCbs);
-    return ScopedAStatus::ok();}
+    return ScopedAStatus::ok();
+#endif
+}
 
 }
 }  // namespace aidl

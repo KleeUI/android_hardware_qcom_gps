@@ -13,6 +13,9 @@ namespace gnss {
 namespace aidl {
 namespace implementation {
 static AGnss* spAGnss = nullptr;
+static void agnssStatusIpV4Cb(AGnssExtStatusIpV4 status) {
+    if (spAGnss != nullptr) spAGnss->statusCb(status.type, status.status);
+}
 
 void agnssServiceDied(void* cookie) {
     LOC_LOGe("IAGnss AIDL service died");
@@ -25,17 +28,6 @@ void agnssServiceDied(void* cookie) {
 AGnss::AGnss(Gnss* gnss) : mGnss(gnss), mType(LOC_AGPS_TYPE_INVALID),
     mDeathRecipient(AIBinder_DeathRecipient_new(&agnssServiceDied)) {
     spAGnss = this;
-    LocationControlCallbacks locCtrlCbs;
-    memset(&locCtrlCbs, 0, sizeof(locCtrlCbs));
-    locCtrlCbs.size = sizeof(LocationControlCallbacks);
-
-    locCtrlCbs.agpsStatusIpV4Cb = [this](AGnssExtStatusIpV4 status) {
-            statusCb(status.type, status.status);
-    };
-
-    if (mGnss->getLocationControlApi() != nullptr ) {
-        mGnss->getLocationControlApi()->updateCallbacks(locCtrlCbs);
-    }
 }
 
 AGnss::~AGnss() {
@@ -101,7 +93,7 @@ void AGnss::statusCb(AGpsExtType type, LocAGpsStatusValue status) {
 }
 
 ScopedAStatus AGnss::setCallback(const shared_ptr<IAGnssCallback>& callback) {
-    if (mGnss == nullptr || mGnss->getLocationControlApi() == nullptr) {
+    if (mGnss == nullptr || mGnss->getGnssInterface() == nullptr) {
         LOC_LOGe("Null GNSS interface");
         return ScopedAStatus(AStatus_fromExceptionCode(EX_UNSUPPORTED_OPERATION));
     }
@@ -118,29 +110,33 @@ ScopedAStatus AGnss::setCallback(const shared_ptr<IAGnssCallback>& callback) {
         AIBinder_linkToDeath(mAGnssCbIface->asBinder().get(), mDeathRecipient, this);
     }
 
+    AgpsCbInfo info = {};
+    info.statusV4Cb = (void*)agnssStatusIpV4Cb;
+    info.atlType = AGPS_ATL_TYPE_SUPL | AGPS_ATL_TYPE_SUPL_ES;
+    mGnss->getGnssInterface()->agpsInit(info);
     return ScopedAStatus::ok();
 }
 ScopedAStatus AGnss::dataConnClosed() {
-    if (mGnss == nullptr || mGnss->getLocationControlApi() == nullptr) {
+    if (mGnss == nullptr || mGnss->getGnssInterface() == nullptr) {
         LOC_LOGe("Null GNSS interface");
         return ScopedAStatus(AStatus_fromExceptionCode(EX_UNSUPPORTED_OPERATION));
     }
 
-    mGnss->getLocationControlApi()->agpsDataConnClosed(AGPS_TYPE_SUPL);
+    mGnss->getGnssInterface()->agpsDataConnClosed(LOC_AGPS_TYPE_SUPL);
     return ScopedAStatus::ok();
 }
 ScopedAStatus AGnss::dataConnFailed() {
-    if (mGnss == nullptr || mGnss->getLocationControlApi() == nullptr) {
+    if (mGnss == nullptr || mGnss->getGnssInterface() == nullptr) {
         LOC_LOGe("Null GNSS interface");
         return ScopedAStatus(AStatus_fromExceptionCode(EX_UNSUPPORTED_OPERATION));
     }
 
-    mGnss->getLocationControlApi()->agpsDataConnFailed(AGPS_TYPE_SUPL);
+    mGnss->getGnssInterface()->agpsDataConnFailed(LOC_AGPS_TYPE_SUPL);
     return ScopedAStatus::ok();
 }
 ScopedAStatus AGnss::dataConnOpen(int64_t networkHandle, const std::string& apn,
         ::aidl::android::hardware::gnss::IAGnss::ApnIpType apnIpType) {
-    if (mGnss == nullptr || mGnss->getLocationControlApi() == nullptr) {
+    if (mGnss == nullptr || mGnss->getGnssInterface() == nullptr) {
         LOC_LOGe("Null GNSS interface");
         return ScopedAStatus(AStatus_fromExceptionCode(EX_UNSUPPORTED_OPERATION));
     }
@@ -174,8 +170,8 @@ ScopedAStatus AGnss::dataConnOpen(int64_t networkHandle, const std::string& apn,
         break;
     }
 
-    mGnss->getLocationControlApi()->agpsDataConnOpen(
-        AGPS_TYPE_SUPL, apnString.c_str(), apnString.size(), (int)bearerType);
+    mGnss->getGnssInterface()->agpsDataConnOpen(
+            LOC_AGPS_TYPE_SUPL, apnString.c_str(), apnString.size(), (int)bearerType);
     return ScopedAStatus::ok();
 }
 ScopedAStatus AGnss::setServer(::aidl::android::hardware::gnss::IAGnssCallback::AGnssType type,

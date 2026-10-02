@@ -1,0 +1,8 @@
+{
+  "schema": 1,
+  "frontend_stage": "out/gnss-modern-legacy-frontend-20261002",
+  "backend_stage": "out/gnss-legacy-backend-20261002-eo7gqkqd",
+  "file_count": 325,
+  "tree_sha256": "1a751b0f83d1a9b275d0b659f279ea532360637a8514fa8723c4266b2acd5ecc",
+  "generated_utc": "2026-10-02T03:52:05Z"
+}

@@ -405,12 +405,6 @@ void convertGnssMeasurementsCodeType(
     case GNSS_MEASUREMENTS_CODE_TYPE_Z:
         out.codeType = out.CODE_TYPE_Z;
         break;
-    case GNSS_MEASUREMENTS_CODE_TYPE_D:
-        out.codeType = out.CODE_TYPE_D;
-        break;
-    case GNSS_MEASUREMENTS_CODE_TYPE_E:
-        out.codeType = out.CODE_TYPE_E;
-        break;
     case GNSS_MEASUREMENTS_CODE_TYPE_OTHER:
     default:
         out.codeType = inOtherCodeTypeName;

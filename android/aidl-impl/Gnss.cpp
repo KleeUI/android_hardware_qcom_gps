@@ -93,8 +93,8 @@ ScopedAStatus Gnss::close() {
 
 void location_on_battery_status_changed(bool charging) {
     LOC_LOGd("battery status changed to %s charging", charging ? "" : "not");
-    if ((sGnss != nullptr) && (sGnss->getLocationControlApi() != nullptr)) {
-        sGnss->getLocationControlApi()->updateBatteryStatus(charging);
+    if ((sGnss != nullptr) && (sGnss->getGnssInterface() != nullptr)) {
+        sGnss->getGnssInterface()->updateBatteryStatus(charging);
     }
 }
 
@@ -103,6 +103,13 @@ Gnss::Gnss(): mApi(mGnssCallback), mGnssCallback(nullptr),
     ENTRY_LOG_CALLFLOW();
     if (sGnss == nullptr) {
         sGnss = this;
+    }
+    if (getGnssInterface() != nullptr) {
+        getGnssInterface()->initialize();
+        getGnssInterface()->odcpiInit([this](const OdcpiRequestInfo& request) {
+            odcpiRequestCb(request);
+        }, OdcpiPrioritytype::ODCPI_HANDLER_PRIORITY_LOW,
+                EMERGENCY_ODCPI | NON_EMERGENCY_ODCPI);
     }
     // register health client to listen on battery change
     loc_extn_battery_properties_listener_init(location_on_battery_status_changed);
@@ -126,22 +133,22 @@ void Gnss::handleAidlClientSsr() {
 
 ILocationControlAPI* Gnss::getLocationControlApi() {
     if (mLocationControlApi == nullptr) {
-        LocationControlCallbacks locCtrlCbs;
-        memset(&locCtrlCbs, 0, sizeof(locCtrlCbs));
-        locCtrlCbs.size = sizeof(LocationControlCallbacks);
-
-        locCtrlCbs.odcpiReqCb =
-                [this](const OdcpiRequestInfo& odcpiRequest) {
-            odcpiRequestCb(odcpiRequest);
-        };
-
-        mLocationControlApi = LocationControlAPI::getInstance(locCtrlCbs);
-        if (mLocationControlApi != nullptr ) {
-            mLocationControlApi->updateCallbacks(locCtrlCbs);
-        }
+        mLocationControlApi = LocationControlAPI::getInstance();
     }
 
     return mLocationControlApi;
+}
+
+const GnssInterface* Gnss::getGnssInterface() {
+    if (mGnssInterface == nullptr) {
+        void* libHandle = nullptr;
+        auto getter = reinterpret_cast<const GnssInterface* (*)()>(
+                dlGetSymFromLib(libHandle, "libgnss.so", "getGnssInterface"));
+        if (getter != nullptr) {
+            mGnssInterface = getter();
+        }
+    }
+    return mGnssInterface;
 }
 
 
@@ -237,9 +244,9 @@ ScopedAStatus Gnss::injectTime(int64_t timeMs, int64_t timeReferenceMs,
 }
 ScopedAStatus Gnss::injectLocation(const GnssLocation& location) {
     ENTRY_LOG_CALLFLOW();
-    ILocationControlAPI* pCtrlApi = getLocationControlApi();
-    if (pCtrlApi != nullptr) {
-        pCtrlApi->injectLocation(location.latitudeDegrees, location.longitudeDegrees,
+    const GnssInterface* gnssInterface = getGnssInterface();
+    if (gnssInterface != nullptr) {
+        gnssInterface->injectLocation(location.latitudeDegrees, location.longitudeDegrees,
                 location.horizontalAccuracyMeters);
     }
     return ScopedAStatus::ok();
@@ -251,7 +258,9 @@ ScopedAStatus Gnss::injectBestLocation(const GnssLocation& gnssLocation) {
         Location location = {};
         convertGnssLocation(gnssLocation, location);
         location.techMask |= LOCATION_TECHNOLOGY_HYBRID_BIT;
-        pCtrlApi->odcpiInject(location);
+        if (getGnssInterface() != nullptr) {
+            getGnssInterface()->odcpiInject(location);
+        }
     }
     return ScopedAStatus::ok();
 }

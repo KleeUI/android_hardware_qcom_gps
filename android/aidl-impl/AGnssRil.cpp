@@ -55,7 +55,7 @@ AGnssRil::~AGnssRil() {
 ScopedAStatus AGnssRil::updateNetworkState(const IAGnssRil::NetworkAttributes& attributes) {
     ENTRY_LOG_CALLFLOW();
     std::string apn = attributes.apn;
-    if (nullptr != mGnss && (nullptr != mGnss->getLocationControlApi())) {
+    if (nullptr != mGnss && (nullptr != mGnss->getGnssInterface())) {
         int8_t typeout = loc_core::TYPE_UNKNOWN;
         bool roaming = false;
         if (attributes.capabilities & IAGnssRil::NETWORK_CAPABILITY_NOT_METERED) {
@@ -67,7 +67,7 @@ ScopedAStatus AGnssRil::updateNetworkState(const IAGnssRil::NetworkAttributes& a
             roaming = false;
         }
         LOC_LOGd("apn string received is: %s", apn.c_str());
-        mGnss->getLocationControlApi()->updateConnectionStatus(attributes.isConnected,
+        mGnss->getGnssInterface()->updateConnectionStatus(attributes.isConnected,
                 typeout, roaming, (NetworkHandle) attributes.networkHandle, apn);
     }
     return ScopedAStatus::ok();

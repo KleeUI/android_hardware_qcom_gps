@@ -41,6 +41,10 @@ namespace hardware {
 namespace gnss {
 namespace aidl {
 namespace implementation {
+static GnssAntennaInfo* gAntennaInfo = nullptr;
+static void legacyAntennaInfoCb(std::vector<GnssAntennaInformation> information) {
+    if (gAntennaInfo != nullptr) gAntennaInfo->gnssAntennaInfoCb(information);
+}
 using ::aidl::android::hardware::gnss::IGnss;
 
 static void convertGnssAntennaInfo(std::vector<GnssAntennaInformation>& in,
@@ -122,8 +126,7 @@ void gnssAntennaInfoServiceDied(void* cookie) {
     }
 }
 GnssAntennaInfo::GnssAntennaInfo(Gnss* gnss) : mGnss(gnss),
-    mDeathRecipient(AIBinder_DeathRecipient_new(&gnssAntennaInfoServiceDied)),
-    mAntennaInfoCb(*this) { }
+    mDeathRecipient(AIBinder_DeathRecipient_new(&gnssAntennaInfoServiceDied)) { gAntennaInfo = this; }
 
 ScopedAStatus GnssAntennaInfo::setCallback(
         const shared_ptr<IGnssAntennaInfoCallback>& callback) {
@@ -143,7 +146,13 @@ ScopedAStatus GnssAntennaInfo::setCallback(
     }
     mMutex.unlock();
 
-    mGnss->getApi().locAPIGetAntennaInfo(&mAntennaInfoCb);
+    if (mGnss->getGnssInterface() == nullptr) {
+        return ScopedAStatus::fromExceptionCode(IGnss::ERROR_GENERIC);
+    }
+    uint32_t result = mGnss->getGnssInterface()->antennaInfoInit(legacyAntennaInfoCb);
+    if (result != ANTENNA_INFO_SUCCESS) {
+        return ScopedAStatus::fromExceptionCode(IGnss::ERROR_GENERIC);
+    }
     return ScopedAStatus::ok();
 }
 ScopedAStatus GnssAntennaInfo::close() {
@@ -152,6 +161,9 @@ ScopedAStatus GnssAntennaInfo::close() {
         return ScopedAStatus::fromExceptionCode(STATUS_INVALID_OPERATION);
     }
 
+    if (mGnss->getGnssInterface() != nullptr) {
+        mGnss->getGnssInterface()->antennaInfoClose();
+    }
     mGnssAntennaInfoCbIface = nullptr;
     return ScopedAStatus::ok();
 

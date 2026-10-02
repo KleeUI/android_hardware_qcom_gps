@@ -26,13 +26,6 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-
-/*
- * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
- * SPDX-License-Identifier: BSD-3-Clause-Clear
- */
-
 #ifndef BATCHING_ADAPTER_H
 #define BATCHING_ADAPTER_H
 
@@ -109,12 +102,11 @@ public:
 
     /* ==== BATCHING ======================================================================= */
     /* ======== COMMANDS ====(Called from Client Thread)==================================== */
-    uint32_t startBatchingCommand(LocationAPI* client, const BatchingOptions &batchOptions);
+    uint32_t startBatchingCommand(LocationAPI* client, BatchingOptions &batchOptions);
     void updateBatchingOptionsCommand(
-            LocationAPI* client, uint32_t id, const BatchingOptions& batchOptions);
+            LocationAPI* client, uint32_t id, BatchingOptions& batchOptions);
     void stopBatchingCommand(LocationAPI* client, uint32_t id);
     void getBatchedLocationsCommand(LocationAPI* client, uint32_t id, size_t count);
-    inline int32_t getBatchSizeCommand(LocationAPI* client) { return mBatchSize; }
     void updateSystemPowerStateCommand(PowerStateType systemPowerState);
     /* ======== RESPONSES ================================================================== */
     void reportResponse(LocationAPI* client, LocationError err, uint32_t sessionId);
@@ -138,8 +130,6 @@ public:
     void updateSystemPowerState(PowerStateType systemPowerState);
 
     /* ==== REPORTS ======================================================================== */
-    virtual void handleEngineLockStatusEvent(EngineLockState engineLockState);
-    void handleEngineLockStatus(EngineLockState engineLockState);
     /* ======== EVENTS ====(Called from QMI Thread)========================================= */
     void reportLocationsEvent(const Location* locations, size_t count,
             BatchingMode batchingMode);
@@ -152,6 +142,8 @@ public:
 
     /* ==== CONFIGURATION ================================================================== */
     /* ======== COMMANDS ====(Called from Client Thread)==================================== */
+    void readConfigCommand();
+    void setConfigCommand();
     /* ======== UTILITIES ================================================================== */
     void setBatchSize(size_t batchSize) { mBatchSize = batchSize; }
     size_t getBatchSize() { return mBatchSize; }
@@ -161,6 +153,7 @@ public:
     uint32_t getBatchingTimeout() { return mBatchingTimeout; }
     void setBatchingAccuracy(uint32_t accuracy) { mBatchingAccuracy = accuracy; }
     uint32_t getBatchingAccuracy() { return mBatchingAccuracy; }
+
 };
 
 #endif /* BATCHING_ADAPTER_H */

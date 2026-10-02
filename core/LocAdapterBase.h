@@ -30,7 +30,7 @@
 /*
 Changes from Qualcomm Innovation Center are provided under the following license:
 
-Copyright (c) 2022-2023, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
+Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted (subject to the limitations in the
@@ -93,16 +93,6 @@ namespace loc_core {
 
 class LocAdapterProxyBase;
 
-typedef uint16_t PpFeatureStatusMask;
-#define DLP_FEATURE_STATUS_QPPE_LIBRARY_PRESENT   0X01
-#define DLP_FEATURE_STATUS_QFE_LIBRARY_PRESENT    0X02
-#define DLP_FEATURE_ENABLED_BY_DEFAULT            0X04
-#define DLP_FEATURE_ENABLED_BY_QESDK              0X08
-#define MLP_FEATURE_ENABLED_BY_DEFAULT            0X10
-#define MLP_FEATURE_ENABLED_BY_QESDK              0X20
-#define DLP_FEATURE_STATUS_LIBRARY_PRESENT   (DLP_FEATURE_STATUS_QPPE_LIBRARY_PRESENT | \
-                                              DLP_FEATURE_STATUS_QFE_LIBRARY_PRESENT)
-
 class LocAdapterBase {
 private:
     static uint32_t mSessionIdCounter;
@@ -116,8 +106,6 @@ protected:
     LocAdapterProxyBase* mLocAdapterProxyBase;
     const MsgTask* mMsgTask;
     bool mAdapterAdded;
-    /* === QESDK RTK feature status =================================================== */
-    PpFeatureStatusMask mPpFeatureStatusMask;
 
     inline LocAdapterBase(const MsgTask* msgTask) :
         mIsMaster(false), mEvtMask(0), mContext(NULL), mLocApi(NULL),
@@ -177,10 +165,6 @@ public:
         mMsgTask->sendMsg(msg);
     }
 
-    inline void sendMsg(const LocMsg* msg, uint32_t delayInMs = 0) const {
-        mMsgTask->sendMsg(msg, delayInMs);
-    }
-
     inline void updateEvtMask(LOC_API_ADAPTER_EVENT_MASK_T event,
                               loc_registration_mask_status status)
     {
@@ -216,14 +200,6 @@ public:
     inline bool isEngineCapabilitiesKnown() { return mIsEngineCapabilitiesKnown;}
     inline void setEngineCapabilitiesKnown(bool value) { mIsEngineCapabilitiesKnown = value;}
 
-    inline void startTimeBasedTracking(const TrackingOptions& options,
-                                       LocApiResponse* adapterResponse) {
-        mLocApi->startTimeBasedTracking(options, adapterResponse);
-    }
-    inline void stopTimeBasedTracking(LocApiResponse* adapterResponse) {
-        mLocApi->stopTimeBasedTracking(adapterResponse);
-    }
-
     virtual void handleEngineUpEvent();
     virtual void handleEngineDownEvent();
     virtual void reportPositionEvent(const UlpLocation& location,
@@ -232,6 +208,11 @@ public:
                                      LocPosTechMask loc_technology_mask,
                                      GnssDataNotification* pDataNotify = nullptr,
                                      int msInWeek = -1);
+    virtual void reportEnginePositionsEvent(unsigned int count,
+                                            EngineLocationInfo* locationArr) {
+        (void)count;
+        (void)locationArr;
+    }
     virtual void reportSvEvent(const GnssSvNotification& svNotify);
     virtual void reportDataEvent(const GnssDataNotification& dataNotify, int msInWeek);
     virtual void reportNmeaEvent(const char* nmea, size_t length);
@@ -241,16 +222,14 @@ public:
     virtual bool reportXtraServer(const char* url1, const char* url2,
                                   const char* url3, const int maxlength);
     virtual void reportLocationSystemInfoEvent(const LocationSystemInfo& locationSystemInfo);
-    virtual void reportModemGnssQesdkFeatureStatus(const ModemGnssQesdkFeatureMask& mask);
+
     virtual bool requestXtraData();
     virtual bool requestTime();
     virtual bool requestLocation();
-    bool requestATL(int connHandle, LocAGpsType agps_type,
-                    LocApnTypeMask apn_type_mask, uint16_t sub_id);
     virtual bool requestATL(int connHandle, LocAGpsType agps_type,
-                            LocApnTypeMask apn_type_mask, SubId sub_id, uint32_t timeout);
-    bool releaseATL(int connHandle);
-    virtual bool releaseATL(int connHandle, uint32_t timeout);
+                            LocApnTypeMask apn_type_mask,
+                            LocSubId sub_id=LOC_DEFAULT_SUB);
+    virtual bool releaseATL(int connHandle);
     virtual bool requestNiNotifyEvent(const GnssNiNotification &notify, const void* data,
                                       const LocInEmergency emergencyState);
     inline virtual bool isInSession() { return false; }
@@ -293,17 +272,9 @@ public:
     void requestCapabilitiesCommand(LocationAPI* client);
 
     virtual void reportLatencyInfoEvent(const GnssLatencyInfo& gnssLatencyInfo);
-    virtual void handleEngineLockStatusEvent(EngineLockState engineLockState);
     virtual void reportEngDebugDataInfoEvent(GnssEngineDebugDataInfo& gnssEngineDebugDataInfo);
     virtual bool reportQwesCapabilities(
             const std::unordered_map<LocationQwesFeatureType, bool> &featureMap);
-    virtual void reportDcMessage(const GnssDcReportInfo& dcReport);
-    virtual void reportSignalTypeCapabilities(const GnssCapabNotification& gnssCapabNotification);
-    //Response to getNtnConfigSignalMask and setNtnConfigSignalMask call
-    virtual void reportNtnStatusEvent(LocationError status,
-            const GnssSignalTypeMask& gpsSignalTypeConfigMask, bool isSetResponse);
-    //Unsolicted NTN config update event from Modem
-    virtual void reportNtnConfigUpdateEvent(const GnssSignalTypeMask& gpsSignalTypeConfigMask);
 };
 
 } // namespace loc_core

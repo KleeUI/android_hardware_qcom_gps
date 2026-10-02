@@ -57,21 +57,11 @@ public:
     virtual ScopedAStatus close() override;
     void gnssAntennaInfoCb(std::vector<GnssAntennaInformation>& gnssAntennaInformations);
 private:
-    struct AntennaInfoAidlCallback : public AntennaInfoCallback {
-        GnssAntennaInfo& mGAI;
-        inline AntennaInfoAidlCallback(GnssAntennaInfo& gai) :
-             AntennaInfoCallback(), mGAI(gai) {}
-        inline virtual void operator()(
-                std::vector<GnssAntennaInformation>& antennaInfo) override {
-            mGAI.gnssAntennaInfoCb(antennaInfo);
-        }
-    };
 
     shared_ptr<IGnssAntennaInfoCallback> mGnssAntennaInfoCbIface = nullptr;
     AIBinder_DeathRecipient *mDeathRecipient = nullptr;
     Gnss* mGnss = nullptr;
     std::mutex mMutex;
-    AntennaInfoAidlCallback mAntennaInfoCb;
 };
 }
 }  // namespace aidl

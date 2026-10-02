@@ -57,6 +57,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ANDROID_HARDWARE_GNSS_AIDL_GNSS_H
 
 #include "location_api/GnssAPIClient.h"
+#include <location_interface.h>
 #include <android/binder_auto_utils.h>
 #include <aidl/android/hardware/gnss/BnGnss.h>
 namespace android {
@@ -131,6 +132,7 @@ struct Gnss : public BnGnss {
     inline GnssAPIClient& getApi() { return mApi; }
     ScopedAStatus updateConfiguration(GnssConfig& gnssConfig);
     ILocationControlAPI* getLocationControlApi();
+    const GnssInterface* getGnssInterface();
     void handleAidlClientSsr();
 
     // ILocationControlAPI callbacks
@@ -155,6 +157,7 @@ private:
 
     shared_ptr<IGnssCallback> mGnssCallback = nullptr;
     ILocationControlAPI* mLocationControlApi = nullptr;
+    const GnssInterface* mGnssInterface = nullptr;
     AIBinder_DeathRecipient *mDeathRecipient = nullptr;
     std::mutex mMutex;
 };

@@ -76,6 +76,18 @@ namespace gnss {
 namespace aidl {
 namespace implementation {
 
+// Frontend-owned capability payload; never crosses the legacy backend ABI.
+struct GnssCapabNotification {
+    struct Signal {
+        GnssSvType svType;
+        double carrierFrequencyHz;
+        GnssMeasurementsCodeType codeType;
+        char otherCodeTypeName[GNSS_MAX_NAME_LENGTH];
+    };
+    uint32_t count;
+    Signal gnssSignalType[GNSS_MEASUREMENTS_MAX];
+};
+
 using ::std::shared_ptr;
 using ::aidl::android::hardware::gnss::IGnssCallback;
 using ::aidl::android::hardware::gnss::IGnss;
@@ -100,7 +112,7 @@ public:
             uint32_t minIntervalMs,
             uint32_t preferredAccuracyMeters,
             uint32_t preferredTimeMs,
-            GnssPowerMode powerMode = GNSS_POWER_MODE_DEFAULT,
+            GnssPowerMode powerMode = GNSS_POWER_MODE_M2,
             uint32_t timeBetweenMeasurement = 0);
 
     // these apis using LocationAPIControlClient
@@ -111,9 +123,9 @@ public:
 
     // callbacks we are interested in
     void onCapabilitiesCb(LocationCapabilitiesMask capabilitiesMask) final;
-    void onTrackingCb(const Location& location) final;
-    void onGnssSvCb(const GnssSvNotification& gnssSvNotification) final;
-    void onGnssNmeaCb(const GnssNmeaNotification& gnssNmeaNotification) final;
+    void onTrackingCb(Location location) final;
+    void onGnssSvCb(GnssSvNotification gnssSvNotification) final;
+    void onGnssNmeaCb(GnssNmeaNotification gnssNmeaNotification) final;
     void onEngineLocationsInfoCb(uint32_t count,
             GnssLocationInfoNotification* engineLocationInfoNotification);
     void onGnssSignalTypesCb(const GnssCapabNotification& gnssCapabNotification);

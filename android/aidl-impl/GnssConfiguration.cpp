@@ -265,7 +265,8 @@ bool GnssConfiguration::setBlocklistedSource(GnssSvIdSource& copyToSource,
     switch (copyFromSource.constellation) {
     case GnssConstellationType::GPS:
         copyToSource.constellation = GNSS_SV_TYPE_GPS;
-        svIdOffset = GNSS_SV_CONFIG_GPS_INITIAL_SV_ID - 1;
+        // Legacy location data types use the canonical GPS SV base (1).
+        svIdOffset = 0;
         break;
     case GnssConstellationType::SBAS:
         copyToSource.constellation = GNSS_SV_TYPE_SBAS;
