@@ -129,6 +129,7 @@ void Gnss::handleAidlClientSsr() {
         mGnssCallback = nullptr;
     }
     mApi.gnssStop();
+    mApi.gnssUpdateCallbacks(nullptr);
 }
 
 ILocationControlAPI* Gnss::getLocationControlApi() {
@@ -201,11 +202,8 @@ ScopedAStatus Gnss::getExtensionGnssDebug(shared_ptr<IGnssDebug>* _aidl_return) 
 ScopedAStatus Gnss::getExtensionGnssVisibilityControl(
         shared_ptr<IGnssVisibilityControl>* _aidl_return) {
     ENTRY_LOG_CALLFLOW();
-    if (mGnssVisibCtrl == nullptr) {
-        mGnssVisibCtrl = SharedRefBase::make<GnssVisibilityControl>(this);
-    }
-    *_aidl_return = mGnssVisibCtrl;
-    return ScopedAStatus::ok();
+    *_aidl_return = nullptr;
+    return ScopedAStatus::fromExceptionCode(EX_UNSUPPORTED_OPERATION);
 }
 ScopedAStatus Gnss::start() {
     ENTRY_LOG_CALLFLOW();

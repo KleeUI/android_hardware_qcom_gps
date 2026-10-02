@@ -249,8 +249,12 @@ void GnssAPIClient::setCallbacks() {
 // for GpsInterface
 void GnssAPIClient::gnssUpdateCallbacks(const shared_ptr<IGnssCallback>& gpsCb) {
     LOC_LOGd("]: ()");
+    {
+        std::lock_guard<std::mutex> lock(mMutex);
+        mGnssCbIface = gpsCb;
+        mSignalTypeCbExpected = gpsCb != nullptr;
+    }
     if (gpsCb != nullptr) {
-        mSignalTypeCbExpected = true;
         setCallbacks();
     }
 }
@@ -513,10 +517,8 @@ void GnssAPIClient::updateCapabilities(LocationCapabilitiesMask capabilitiesMask
     if (capabilitiesMask & LOCATION_CAPABILITIES_CONSTELLATION_ENABLEMENT_BIT) {
         data |= IGnssCallback::CAPABILITY_SATELLITE_BLOCKLIST;
     }
-    if (capabilitiesMask & LOCATION_CAPABILITIES_MEASUREMENTS_CORRECTION_BIT) {
-        data |= IGnssCallback::CAPABILITY_MEASUREMENT_CORRECTIONS;
-        data |= IGnssCallback::CAPABILITY_MEASUREMENT_CORRECTIONS_FOR_DRIVING;
-    }
+    // The legacy bridge has no measurement-corrections implementation yet.
+    // Its backend mask must not advertise an unsupported AIDL extension.
     if (capabilitiesMask & LOCATION_CAPABILITIES_ANTENNA_INFO) {
         data |= IGnssCallback::CAPABILITY_ANTENNA_INFO;
     }

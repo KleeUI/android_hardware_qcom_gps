@@ -156,7 +156,7 @@ private:
     bool mNmeaEnabled;
     bool mSignalTypeCbExpected;
     bool mIsNlpActive;
-    const shared_ptr<IGnssCallback>& mGnssCbIface;
+    shared_ptr<IGnssCallback> mGnssCbIface;
 };
 
 }  // namespace implementation

@@ -48,9 +48,11 @@ using ::aidl::android::hardware::gnss::BnGnssAntennaInfo;
 using ::aidl::android::hardware::gnss::IGnssAntennaInfoCallback;
 using ::std::shared_ptr;
 using ::ndk::ScopedAStatus;
+struct AntennaCallbackState;
 class GnssAntennaInfo : public BnGnssAntennaInfo {
 public:
     GnssAntennaInfo(Gnss* gnss);
+    ~GnssAntennaInfo();
 
     virtual ScopedAStatus setCallback(const shared_ptr<IGnssAntennaInfoCallback>& callback)
             override;
@@ -58,7 +60,7 @@ public:
     void gnssAntennaInfoCb(std::vector<GnssAntennaInformation>& gnssAntennaInformations);
 private:
 
-    shared_ptr<IGnssAntennaInfoCallback> mGnssAntennaInfoCbIface = nullptr;
+    shared_ptr<AntennaCallbackState> mCallbackState;
     AIBinder_DeathRecipient *mDeathRecipient = nullptr;
     Gnss* mGnss = nullptr;
     std::mutex mMutex;

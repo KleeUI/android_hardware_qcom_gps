@@ -317,8 +317,9 @@ void GnssMeasurementInterface::convertGnssFlags(
         out.flags |= out.HAS_SATELLITE_ISB_UNCERTAINTY;
     if (in.flags & GNSS_MEASUREMENTS_DATA_SATELLITE_PVT_BIT)
         out.flags |= out.HAS_SATELLITE_PVT;
-    if (in.flags & GNSS_MEASUREMENTS_DATA_CORRELATION_VECTOR_BIT)
-        out.flags |= out.HAS_CORRELATION_VECTOR;
+    // The legacy measurement ABI does not carry correlationVectors; the
+    // converter intentionally leaves that field empty, so do not advertise
+    // HAS_CORRELATION_VECTOR to AIDL clients.
 }
 
 void GnssMeasurementInterface::convertGnssSvId(const GnssMeasurementsData& in, int& out) {
