@@ -30,6 +30,7 @@
 #define LOG_TAG "LocSvc_MsgTask"
 
 #include <unistd.h>
+#include <stdlib.h>
 #include <MsgTask.h>
 #include <msg_q.h>
 #include <log_util.h>
@@ -67,7 +68,14 @@ MsgTask::MsgTask(const char* threadName) :
 
 void MsgTask::sendMsg(const LocMsg* msg) const {
     if (msg && this) {
-        msg_q_snd((void*)mQ, (void*)msg, LocMsgDestroy);
+        const msq_q_err_type result = msg_q_snd((void*)mQ, (void*)msg, LocMsgDestroy);
+        if (eMSG_Q_SUCCESS != result) {
+            // Dropping a shutdown barrier can let a queued deletion overtake
+            // live callbacks. The void ABI cannot return enqueue failure.
+            LOC_LOGE("%s: cannot enqueue msg %p: %s", __func__, msg,
+                     loc_get_msg_q_status(result));
+            abort();
+        }
     } else {
         LOC_LOGE("%s: msg is %p and this is %p",
                  __func__, msg, this);

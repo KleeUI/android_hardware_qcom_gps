@@ -198,6 +198,7 @@ public:
             LocApiBase* mLocApi;
             inline LocKillMsg(LocApiBase* locApi) : LocMsg(), mLocApi(locApi) {}
             inline virtual void proc() const {
+                mLocApi->close();
                 delete mLocApi;
             }
         };
