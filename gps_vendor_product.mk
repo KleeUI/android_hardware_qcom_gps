@@ -20,7 +20,9 @@ ifeq ($(strip $(TARGET_BOARD_AUTO)),true)
 PRODUCT_PACKAGES += libgnssauto_power
 endif #TARGET_BOARD_AUTO
 
+ifneq ($(QCOM_GNSS_AIDL_ONLY),true)
 PRODUCT_PACKAGES += android.hardware.gnss@2.1-impl-qti
+endif
 PRODUCT_PACKAGES += android.hardware.gnss-aidl-impl-qti
 PRODUCT_PACKAGES += android.hardware.gnss-aidl-service-qti
 

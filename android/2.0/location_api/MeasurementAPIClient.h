@@ -103,7 +103,7 @@ public:
 
     // callbacks we are interested in
     void onGnssMeasurementsCb(
-            const GnssMeasurementsNotification &gnssMeasurementsNotification) final;
+            GnssMeasurementsNotification gnssMeasurementsNotification) final;
 
 private:
     inline void setCallbackLocked(const sp<V1_0::IGnssMeasurementCallback>& callback) {

@@ -120,10 +120,10 @@ public:
 
     // callbacks we are interested in
     void onCapabilitiesCb(LocationCapabilitiesMask capabilitiesMask) final;
-    void onTrackingCb(const Location& location) final;
-    void onGnssNiCb(uint32_t id, const GnssNiNotification& gnssNiNotification) final;
-    void onGnssSvCb(const GnssSvNotification& gnssSvNotification) final;
-    void onGnssNmeaCb(const GnssNmeaNotification& gnssNmeaNotification) final;
+    void onTrackingCb(Location location) final;
+    void onGnssNiCb(uint32_t id, GnssNiNotification gnssNiNotification) final;
+    void onGnssSvCb(GnssSvNotification gnssSvNotification) final;
+    void onGnssNmeaCb(GnssNmeaNotification gnssNmeaNotification) final;
     void onEngineLocationsInfoCb(uint32_t count,
             GnssLocationInfoNotification* engineLocationInfoNotification);
 

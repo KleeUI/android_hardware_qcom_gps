@@ -1,3 +1,6 @@
+# Legacy HIDL frontends require a matching backend API.
+ifneq ($(QCOM_GNSS_AIDL_ONLY),true)
+
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
@@ -104,3 +107,5 @@ LOCAL_SHARED_LIBRARIES += \
 LOCAL_CFLAGS += $(GNSS_CFLAGS)
 
 include $(BUILD_EXECUTABLE)
+
+endif # QCOM_GNSS_AIDL_ONLY

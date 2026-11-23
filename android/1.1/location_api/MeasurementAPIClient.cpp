@@ -146,7 +146,7 @@ void MeasurementAPIClient::measurementClose() {
 
 // callbacks
 void MeasurementAPIClient::onGnssMeasurementsCb(
-        const GnssMeasurementsNotification &gnssMeasurementsNotification)
+        GnssMeasurementsNotification gnssMeasurementsNotification)
 {
     LOC_LOGD("%s]: (count: %zu active: %d)",
             __FUNCTION__, gnssMeasurementsNotification.count, mTracking);

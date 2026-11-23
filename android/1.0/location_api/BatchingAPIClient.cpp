@@ -164,7 +164,7 @@ void BatchingAPIClient::onCapabilitiesCb(LocationCapabilitiesMask capabilitiesMa
 }
 
 void BatchingAPIClient::onBatchingCb(size_t count, Location* location,
-        const BatchingOptions& /*batchOptions*/)
+        BatchingOptions /*batchOptions*/)
 {
     LOC_LOGD("%s]: (count: %zu)", __FUNCTION__, count);
     mMutex.lock();

@@ -201,7 +201,7 @@ void BatchingAPIClient::onCapabilitiesCb(LocationCapabilitiesMask capabilitiesMa
 }
 
 void BatchingAPIClient::onBatchingCb(size_t count, Location* location,
-        const BatchingOptions& /*batchOptions*/)
+        BatchingOptions /*batchOptions*/)
 {
     mMutex.lock();
     auto gnssBatchingCbIface(mGnssBatchingCbIface);

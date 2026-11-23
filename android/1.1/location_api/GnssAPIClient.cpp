@@ -383,7 +383,7 @@ void GnssAPIClient::onCapabilitiesCb(LocationCapabilitiesMask capabilitiesMask)
     }
 }
 
-void GnssAPIClient::onTrackingCb(const Location& location)
+void GnssAPIClient::onTrackingCb(Location location)
 {
     LOC_LOGD("%s]: (flags: %02x)", __FUNCTION__, location.flags);
     mMutex.lock();
@@ -401,7 +401,7 @@ void GnssAPIClient::onTrackingCb(const Location& location)
     }
 }
 
-void GnssAPIClient::onGnssNiCb(uint32_t id, const GnssNiNotification& gnssNiNotification)
+void GnssAPIClient::onGnssNiCb(uint32_t id, GnssNiNotification gnssNiNotification)
 {
     LOC_LOGD("%s]: (id: %d)", __FUNCTION__, id);
     mMutex.lock();
@@ -476,7 +476,7 @@ void GnssAPIClient::onGnssNiCb(uint32_t id, const GnssNiNotification& gnssNiNoti
     gnssNiCbIface->niNotifyCb(notificationGnss);
 }
 
-void GnssAPIClient::onGnssSvCb(const GnssSvNotification& gnssSvNotification)
+void GnssAPIClient::onGnssSvCb(GnssSvNotification gnssSvNotification)
 {
     LOC_LOGD("%s]: (count: %zu)", __FUNCTION__, gnssSvNotification.count);
     mMutex.lock();
@@ -494,7 +494,7 @@ void GnssAPIClient::onGnssSvCb(const GnssSvNotification& gnssSvNotification)
     }
 }
 
-void GnssAPIClient::onGnssNmeaCb(const GnssNmeaNotification& gnssNmeaNotification)
+void GnssAPIClient::onGnssNmeaCb(GnssNmeaNotification gnssNmeaNotification)
 {
     mMutex.lock();
     auto gnssCbIface(mGnssCbIface);
